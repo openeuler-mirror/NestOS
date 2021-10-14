@@ -1,0 +1,6 @@
+# Moving files around and verifying them
+packages:
+ # - git-core
+  - git
+  - gnupg2
+  - rsync

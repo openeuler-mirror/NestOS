@@ -1,0 +1,23 @@
+
+
+enable console-login-helper-messages-gensnippet-os-release.service
+enable console-login-helper-messages-gensnippet-ssh-keys.service
+
+enable coreos-update-ca-trust.service
+
+enable coreos-ignition-firstboot-complete.service
+# Boot checkin services for cloud providers.
+enable afterburn-checkin.service
+enable afterburn-firstboot-checkin.service
+# Target to write SSH key snippets from cloud providers.
+enable afterburn-sshkeys.target
+# Update agent
+enable zincati.service
+# Testing aid
+enable coreos-liveiso-success.service
+# See bootupd.yaml
+enable bootupd.socket
+
+
+enable rtas_errd.service
+enable clevis-luks-askpass.path

@@ -1,0 +1,9 @@
+#!/usr/bin/bash
+#
+# Clean up existing nodes that have a world-readable /boot/ignition/config.ign.
+# Remove this after the next barrier release on all streams.
+
+set -euo pipefail
+
+mount -o remount,rw /boot
+rm -rf /boot/ignition

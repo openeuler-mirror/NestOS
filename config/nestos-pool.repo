@@ -1,0 +1,10 @@
+[nestos]
+name= extra repository - $basearch
+baseurl=http://10.1.110.88/nestos/nestos_x86
+enabled=1
+#repo_gpgcheck=0
+type=rpm-md
+gpgcheck=0
+#skip_if_unavailable=True
+
+

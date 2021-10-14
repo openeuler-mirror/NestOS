@@ -1,37 +1,70 @@
 # NestOS
 
 #### 介绍
-NestOS is an automatically updated minimal operating system developed based on openEuler
+NestOS是一款在openEuler社区CloudNative sig组孵化的云底座操作系统，专注于提供最佳的容器主机，大规模下安全的运行容器化工作负载。
 
-#### 软件架构
-软件架构说明
+Nest即“巢穴”，作为可以包容podman（鼹鼠）、iSulad（蚂蚁）、docker（集装箱）的“巢穴”，NestOS即化身为可以搭载iSulad、docker、podman等基础平台的操作系统。
 
+NestOS将配置工具ignition与rpm-ostree、OCI支持、SElinux强化等技术集成在一起，采用基于双系统分区、容器技术和集群架构的设计思路，搭载iSulad、docker、podman等主流容器基础平台，克服了由于用户修改系统内容、用户服务对系统组件依赖，以及系统软件包升级时不稳定中间态等种种导致升级过程不可靠的因素，最终以一种轻量级、定制化的操作系统呈现出来。可以适应各种不同的基础设施环境，并与OKD紧密集成，针对运行Kubernetes进行了优化，使系统具备十分便捷的集群组建能力。 
 
-#### 安装教程
+![image-20211015170943884](graph/README/image-20211015170943884.png)
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+#### 快速开始
+[在虚拟化平台部署-以VMware为例](https://gitee.com/openeuler/NestOS/blob/master/docs/%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B.md)
 
-#### 使用说明
+#### NestOS应用指南
+1.  [rpm-ostree使用](https://gitee.com/openeuler/NestOS/blob/master/docs/rpm-ostree%E4%BD%BF%E7%94%A8.md)
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+2.  [k8s+iSulad搭建](https://gitee.com/openeuler/NestOS/blob/master/docs/K8S+iSulad%E6%90%AD%E5%BB%BA.md)
 
-#### 参与贡献
+3.  [zincati自动更新](https://gitee.com/openeuler/NestOS/blob/master/docs/zincati%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E4%BD%BF%E7%94%A8.md)
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+#### 功能特性
 
+1.  容器技术
+2.  rpm-ostree
+3.  nestos-installer
+4.  Zincati
+5.  Cincinnati
+6.  ignition系统初始化
+7.  Afterburn
 
-#### 特技
+详细内容请点击[功能特性详细说明](https://gitee.com/openeuler/NestOS/blob/master/docs/%E5%8A%9F%E8%83%BD%E7%89%B9%E6%80%A7%E6%8F%8F%E8%BF%B0.md)
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+#### 容器性能测试
+
+使用NestOS 20211009版本，横向对比 docker，podman，iSulad 容器引擎性能。测试结果如下:
+
+| operator(ms) | Docker | Podman | iSulad | vs Docker | vs Podman |
+| :----------: | :----: | :----: | :----: | :-------: | :-------: |
+|  100*creat   |  1745  | 22919  |  1122  |   -36%    |   -95%    |
+|  100*start   |  8561  |  8133  |  1561  |   -82%    |   -81%    |
+|   100*stop   |  1483  |  1445  |  296   |   -80%    |   -80%    |
+|    100*rm    |  1691  |  5286  |  741   |   -56%    |   -86%    |
+
+更多详细内容请[点击](https://gitee.com/openeu/NestOS/blob/master/docs/%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94%E6%B5%8B%E8%AF%95.md)
+
+#### FAQ
+
+1、NestOS与Fedora CoreOS是什么关系？
+
+NestOS是基于Fedora CoreOS的衍生版本，后续我们将会结合openeuler社区的各项特性，独立维护发展，也欢迎各位伙伴在issue中提出自己的需求和意见。
+
+2、config文件夹是什么？
+
+config是制作NestOS镜像时使用的配置文件，由于现阶段没有跟随社区版本发布，所以该文件为我们根据openeuler定制的一份配置文件。配置文件中有一些注释，以及个别软件包引入与否，均为我们本地进行测试评估需要，现开源出来供大家交流学习使用。并且配置文件中所包含的软件包源、IP地址均为本地搭建。
+
+#### 主要贡献者
+
+|   Gitee ID    |   公司   |          邮箱           |
+| :-----------: | :------: | :---------------------: |
+|  @duyiwei7w   | 麒麟软件 |   duyiwei@kylinos.cn    |
+|  @ningjinnj   | 麒麟软件 |   ningjin@kylinos.cn    |
+|    @shanph    | 麒麟软件 |  lishanfeng@kylinos.cn  |
+|   @yahoohey   | 麒麟软件 |   chenjian@kylinos.cn   |
+| @wangyueliang | 麒麟软件 | wangyueliang@kylinos.cn |
+| @fu-shanqing  | 麒麟软件 |  fushanqing@kylinos.cn  |
+|   @kylinhao   | 麒麟软件 |   wanghao6@kylinos.cn   |
+| @duguhaotian  |   华为   |   liuhao27@huawei.com   |
+
+欢迎感兴趣的小伙伴加入我们
