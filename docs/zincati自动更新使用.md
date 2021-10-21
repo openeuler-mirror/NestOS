@@ -1,6 +1,6 @@
 # zincati自动更新使用
 
-zincati负责NestOS的自动更新，zincati通过cincincati提供的后端来检查当前是否有可更新版本，若检测到有可能新版本，会通过rpm-ostree进行下载。
+zincati负责NestOS的自动更新，zincati通过cincinnati提供的后端来检查当前是否有可更新版本，若检测到有可能新版本，会通过rpm-ostree进行下载。
 
 目前系统默认关闭zincati自动更新服务，可通过修改配置文件设置为开机自动启动自动更新服务。
 
@@ -9,17 +9,17 @@ vi /etc/zincati/config.d/95-disable-on-dev.toml
 ```
 
 将updates.enabled设置为true
-同时增加配置文件，修改cincincati后端地址
+同时增加配置文件，修改cincinnati后端地址
 
 ```
-vi /etc/zincati/config.d/update-cincincati.toml
+vi /etc/zincati/config.d/update-cincinnati.toml
 ```
 
 添加如下内容
 
 ```
 [cincinnati]
-base_url="http://10.1.110.88:8080"
+base_url="http://nestos.org.cn:8080"
 ```
 
 重新启动zincati服务
