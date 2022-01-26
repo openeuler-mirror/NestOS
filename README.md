@@ -5,7 +5,9 @@ NestOS是一款在openEuler社区CloudNative sig组孵化的云底座操作系�
 
 Nest即“巢穴”，作为可以包容podman（鼹鼠）、iSulad（蚂蚁）、docker（集装箱）的“巢穴”，NestOS即化身为可以搭载iSulad、docker、podman等基础平台的操作系统。
 
-NestOS将配置工具ignition与rpm-ostree、OCI支持、SElinux强化等技术集成在一起，采用基于双系统分区、容器技术和集群架构的设计思路，搭载iSulad、docker、podman等主流容器基础平台，克服了由于用户修改系统内容、用户服务对系统组件依赖，以及系统软件包升级时不稳定中间态等种种导致升级过程不可靠的因素，最终以一种轻量级、定制化的操作系统呈现出来。可以适应各种不同的基础设施环境，并与OKD紧密集成，针对运行Kubernetes进行了优化，使系统具备十分便捷的集群组建能力。 
+NestOS将配置工具ignition与rpm-ostree、OCI支持、SElinux强化等技术集成在一起，采用基于双系统分区、容器技术和集群架构的设计思路，搭载iSulad、docker、podman等主流容器基础平台，克服了由于用户修改系统内容、用户服务对系统组件依赖，以及系统软件包升级时不稳定中间态等种种导致升级过程不可靠的因素，最终以一种轻量级、定制化的操作系统呈现出来。可以适应各种不同的基础设施环境，并与OKD紧密集成，针对运行Kubernetes进行了优化，使系统具备十分便捷的集群组建能力。
+
+目前NestOS beta版已经在鲲鹏920、飞腾2000、飞腾2500等平台上完成了适配。 
 
 ![image-20211015170943884](graph/README/image-20211015170943884.png)
 
@@ -14,10 +16,9 @@ NestOS将配置工具ignition与rpm-ostree、OCI支持、SElinux强化等技术�
 
 #### NestOS应用指南
 1.  [rpm-ostree使用](https://gitee.com/openeuler/NestOS/blob/master/docs/rpm-ostree%E4%BD%BF%E7%94%A8.md)
-
 2.  [k8s+iSulad搭建](https://gitee.com/openeuler/NestOS/blob/master/docs/K8S+iSulad%E6%90%AD%E5%BB%BA.md)
-
 3.  [zincati自动更新](https://gitee.com/openeuler/NestOS/blob/master/docs/zincati%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E4%BD%BF%E7%94%A8.md)
+4.  [NestOS定制化](https://gitee.com/openeuler/NestOS/blob/master/docs/%E5%AE%9A%E5%88%B6NestOS.md)
 
 #### 功能特性
 
@@ -42,9 +43,7 @@ NestOS将配置工具ignition与rpm-ostree、OCI支持、SElinux强化等技术�
 |   100*stop   |  1483  |  1445  |  296   |   -80%    |   -80%    |
 |    100*rm    |  1691  |  5286  |  741   |   -56%    |   -86%    |
 
-更多详细内容请[点击](https://gitee.com/openeu/NestOS/blob/master/docs/%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94%E6%B5%8B%E8%AF%95.md)
-
-#### FAQ
+更多详细内容请[点击](https://gitee.com/openeuler/NestOS/blob/master/docs/%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94%E6%B5%8B%E8%AF%95.md)
 
 1、NestOS与Fedora CoreOS是什么关系？
 
@@ -54,6 +53,9 @@ NestOS是基于Fedora CoreOS的衍生版本，后续我们将会结合openeuler�
 
 config是制作NestOS镜像时使用的配置文件，由于现阶段没有跟随社区版本发布，所以该文件为我们根据openeuler定制的一份配置文件。配置文件中有一些注释，以及个别软件包引入与否，均为我们本地进行测试评估需要，现开源出来供大家交流学习使用。并且配置文件中所包含的软件包源、IP地址均为本地搭建。
 
+#### NestOS roadmap
+
+![image-NestOS-roadmap.png](graph/README/image-NestOS-roadmap.png)
 #### 主要贡献者
 
 |   Gitee ID    |   公司   |          邮箱           |
@@ -68,3 +70,6 @@ config是制作NestOS镜像时使用的配置文件，由于现阶段没有跟�
 | @duguhaotian  |   华为   |   liuhao27@huawei.com   |
 
 欢迎感兴趣的小伙伴加入我们
+
+
+  [1]: ./images/NestOS-roadmap.png "NestOS-roadmap.png"

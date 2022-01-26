@@ -233,7 +233,7 @@ sha256:73d337f5edd79dd4db997d98d329bd98020b712f8d7833c33a85d8fe44d0a4f5 --cri-
 socket=/var/run/isulad.sock
 ```
 
-**注意**:添加--cri-socket=/var/run/isulad.sock以使用isula为容器引擎
+**注意**:添加--cri-socket=/var/run/isulad.sock以使用isulad为容器引擎
 查看下载好的镜像
 
 ```
