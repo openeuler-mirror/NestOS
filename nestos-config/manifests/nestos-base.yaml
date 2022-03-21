@@ -1,0 +1,211 @@
+# This file is most of a NestOS like system; it inherits from "core".
+# Add things in this file which are somewhat "opinionated", not necessarily
+# core functionality.
+
+include:
+  - ignition-and-ostree.yaml
+  - file-transfer.yaml
+  - networking-tools.yaml
+  - system-configuration.yaml
+  - user-experience.yaml
+  - shared-workarounds.yaml
+
+initramfs-args:
+  - --no-hostonly
+  # We don't support root on NFS, so we don't need it in the initramfs. It also
+  # conflicts with /var mount support in ignition because NFS tries to mount stuff
+  # in /var/ and then ignition can't cleanly unmount it. For example:
+  # https://github.com/dracutdevs/dracut/blob/1856ae95c873a6fe855b3dccd0144f1a96b9e71c/modules.d/95nfs/nfs-start-rpc.sh#L7
+  # See also discussion in https://github.com/coreos/fedora-coreos-config/pull/60
+  - --omit=nfs
+  # Omit these since we don't use them
+  - --omit=lvm
+  - --omit=iscsi
+
+# Be minimal
+recommends: false
+
+ignore-removed-users:
+  - root
+ignore-removed-groups:
+  - root
+etc-group-members:
+  - wheel
+  - sudo
+  - systemd-journal
+  - adm
+
+check-passwd:
+  type: "file"
+  filename: "passwd"
+check-groups:
+  type: "file"
+  filename: "group"
+
+default-target: multi-user.target
+
+# we can drop this when it's the rpm-ostree default
+rpmdb: sqlite
+
+# ⚠⚠⚠ ONLY TEMPORARY HACKS ALLOWED HERE; ALL ENTRIES NEED TRACKER LINKS ⚠⚠⚠
+# See also the version of this in fedora-coreos.yaml
+postprocess:
+  - |
+    #!/usr/bin/env bash
+     #/usr/sbin/mpathconf --enable
+    systemctl mask kdump.service
+    systemctl mask multipathd.service
+            
+  - |
+    #!/usr/bin/env bash
+    rm -rf /etc/gshadow
+    echo "u    polkitd    -    polkitd" > /usr/lib/sysusers.d/polkit.conf
+    echo "u    chrony     -    chrony" > /usr/lib/sysusers.d/chrony.conf
+    echo "u    sshd       -    sshd" > /usr/lib/sysusers.d/sshd.conf
+    echo "u    rpc       -    rpc" > /usr/lib/sysusers.d/rpc.conf
+    echo "u    rpcuser   -    rpcuser" > /usr/lib/sysusers.d/rpcuser.conf
+  # This will be dropped once rpm-ostree because module-aware.
+  # https://github.com/projectatomic/rpm-ostree/issues/1542#issuecomment-419684977
+  # https://github.com/projectatomic/rpm-ostree/issues/1435
+  - |
+    #!/usr/bin/env bash
+    set -xeuo pipefail
+    for x in /etc/yum.repos.d/*modular.repo; do
+      sed -i -e 's,enabled=[01],enabled=0,' ${x}
+    done
+  # Enable SELinux booleans used by OpenShift
+  # https://github.com/coreos/fedora-coreos-tracker/issues/284
+  - |
+    #!/usr/bin/env bash
+    set -xeuo pipefail
+    #setsebool -P -N container_use_cephfs on  # RHBZ#1692369
+    setsebool -P -N virt_use_samba on  # RHBZ#1754825
+
+  # Mask dnsmasq. We include dnsmasq for host services that use the dnsmasq
+  # binary but intentionally mask the systemd service so users can't easily
+  # use it as an external dns server. We prefer they use a container for that.
+  # https://github.com/coreos/fedora-coreos-tracker/issues/519
+  - |
+    #!/usr/bin/env bash
+    systemctl mask dnsmasq.service
+  # Mask systemd-repart. Ignition is responsible for partition setup on first
+  # boot and does not use systemd-repart currently. See also
+  # https://github.com/coreos/fedora-coreos-tracker/issues/570
+  - |
+    #!/usr/bin/env bash
+    systemctl mask systemd-repart.service
+
+  # Neuter systemd-resolved for now.
+  # https://github.com/coreos/fedora-coreos-tracker/issues/649#issuecomment-743219353
+  # Remove when on F35+ as NM now handles rdns + resolved better
+  # https://github.com/coreos/fedora-coreos-tracker/issues/834
+  # https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/issues/601
+  # https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/merge_requests/877
+  - |
+    #!/usr/bin/env bash
+    set -xeuo pipefail
+    # Only operate on F34 since F35+ has been fixed
+    source /etc/os-release
+    [ ${VERSION_ID} -eq 34 ] || exit 0
+    # Get us back to Fedora 32's nsswitch.conf settings
+    sed -i 's/^hosts:.*/hosts:      files dns myhostname/' /etc/nsswitch.conf
+    mkdir -p /usr/lib/systemd/resolved.conf.d/
+    cat > /usr/lib/systemd/resolved.conf.d/nestos-stub-listener.conf <<'EOF'
+    # Fedora CoreOS is electing to not use systemd-resolved's internal
+    # logic for now because of issues with setting hostnames via reverse DNS.
+    # https://github.com/coreos/fedora-coreos-tracker/issues/649#issuecomment-736104003
+    [Resolve]
+    DNSStubListener=no
+    EOF
+
+  # Set the fallback hostname to `localhost`. This was needed in F33/F34
+  # because a fallback hostname of `fedora` + systemd-resolved broke
+  # rDNS. It's now fixed in F35+ NetworkManager to handle the corner cases
+  # around synthetized hostnames and systemd-resolved, but the question
+  # remains on what is a more appropriate default hostname for a server like
+  # host. https://github.com/coreos/fedora-coreos-tracker/issues/902
+  - |
+    #!/usr/bin/env bash
+    source /etc/os-release
+    if [ -z "${DEFAULT_HOSTNAME:-}" ]; then
+      echo 'DEFAULT_HOSTNAME=localhost' >> /usr/lib/os-release
+    fi
+
+# Packages listed here should be specific to Fedore CoreOS (as in not yet
+# available in RHCOS or not desired in RHCOS). All other packages should go
+# into one of the sub-manifests listed at the top.
+packages:
+  # Container tooling
+  - crun
+  # Security
+  - polkit
+  # System setup
+  - afterburn-dracut
+  # SSH
+  - ssh-key-dir
+  # Containers
+  - systemd-container catatonit
+  - fuse-overlayfs slirp4netns
+  # name resolution for podman containers
+  # https://github.com/coreos/fedora-coreos-tracker/issues/519
+  - dnsmasq
+  - iSulad
+  # Remote IPC for podman
+  - libvarlink-util
+  # Minimal NFS client
+  - nfs-utils-nestos
+  # Active Directory support
+  - adcli
+  # Additional firewall support; we aren't including these in RHCOS or they
+  # don't exist in RHEL
+ #- iptables-nft iptables-services
+  # WireGuard https://github.com/coreos/fedora-coreos-tracker/issues/362
+  - wireguard-tools
+  # Storage
+  - btrfs-progs
+  - WALinuxAgent-udev
+  # Allow communication between sudo and SSSD
+  # for caching sudo rules by SSSD.
+  # https://github.com/coreos/fedora-coreos-tracker/issues/445
+  - libsss_sudo
+  # SSSD; we only ship a subset of the backends
+  - sssd-client sssd-ad sssd-ipa sssd-krb5 sssd-ldap
+  # Used by admins interactively
+  - attr
+  - openssl
+  - lsof
+  # Provides terminal tools like clear, reset, tput, and tset
+  - ncurses
+  # file-transfer: note fuse-sshfs is not in RHEL
+  # so we can't put it in file-transfer.yaml
+  - fuse-sshfs
+  # Improved MOTD experience
+  - console-login-helper-messages-motdgen
+  # i18n
+  - kbd
+  # nvme-cli for managing nvme disks
+  - nvme-cli
+  # zram-generator (but not zram-generator-defaults) for F33 change
+  # https://github.com/coreos/fedora-coreos-tracker/issues/509
+  - zram-generator
+
+# This thing is crying out to be pulled into systemd, but that hasn't happened
+# yet.  Also we may want to add to rpm-ostree something like arch negation;
+# basically right now it doesn't exist on s390x.
+# Anyways, it was requested by the Red Hat perf team for RHCOS, so we have it here.
+# https://serverfault.com/questions/513807/is-there-still-a-use-for-irqbalance-on-modern-hardware
+# https://access.redhat.com/solutions/41535
+packages-x86_64:
+  - irqbalance
+packages-ppc64le:
+  - irqbalance
+  - librtas
+  - powerpc-utils-core
+  - ppc64-diag-rtas
+packages-aarch64:
+  - irqbalance
+
+# See https://github.com/coreos/bootupd
+arch-include:
+  x86_64: bootupd.yaml
+  aarch64: bootupd.yaml
