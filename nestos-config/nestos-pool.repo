@@ -1,0 +1,7 @@
+[nestos]
+name= extra repository - $basearch
+baseurl=软件包源地址
+enabled=1
+type=rpm-md
+gpgcheck=0
+
