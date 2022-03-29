@@ -1,5 +1,7 @@
 # NestOS
 
+#### 目前NestOS已跟随openEuler 22.03 LTS版本同步发布，欢迎各位爱好者下载体验！下载链接请访问[NestOS官网](https://nestos.org.cn/)
+
 #### 介绍
 NestOS是一款在openEuler社区CloudNative sig组孵化的云底座操作系统，专注于提供最佳的容器主机，大规模下安全的运行容器化工作负载。
 
