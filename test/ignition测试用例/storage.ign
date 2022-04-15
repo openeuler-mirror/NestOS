@@ -1,0 +1,32 @@
+{
+  "ignition": {
+    "version": "3.1.0"
+  },
+  "passwd": {
+    "users": [
+      {
+        "groups": [
+          "adm",
+          "sudo",
+          "systemd-journal",
+          "wheel"
+        ],
+        "name": "nest",
+        "passwordHash": "$1$yoursalt$UGhjCXAJKpWWpeN8xsF.c/",
+        "sshAuthorizedKeys": [
+          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCsgIP2uIynA2cUSRwaHpE7VV8enHhIv/Npp/wESgOyImkTH7ye89Al1Wo00hpxiIZqN6rKxj/DCL4HraM76uJ6nTJTdRs/XzVyNa5jfOe1YDmHnn3MN6cOUqn48v2+JU0o3eIaL7w72s9KOuk+NwrePyQd2BEhJiKDqOAiU/lf5xw+bpfxk8G8FzYWqtF7vGyVMw8Jlo+jQbPoc5ImO4yQ8tC7klwqPJ4v26Fz4ihUFXZk10+o2qVdtkaLOfA8MNbHXU1PTx6fqIPC+Vhd5n8X4WfgcdYIFmoovEg8lhpqCB3TIzZI7eSU4hSEEas3pVVCi58pQBAt5xSfF/Shr0+qGEGyub9rgweMm/Avv5s3CIEhWUDgwUZ5sfRUiLqN2Hil8ugsNmAUIqGLa536yNTYFUTGQHimq2qchrETIX3xD5emcWORQikaxdXixq/tDbAgr4q+M9zAMy0CzIDbUCi+2DDIjr9tL/r9KiZYpQUAai8yCkJb6g3Ct2pMsqnQdEk= root"
+        ]
+      }
+    ]
+  },
+  "storage": {
+    "filesystems": [
+      {
+        "device": "/dev/disk/by-partlabel/root",
+        "format": "ext4",
+        "label": "root",
+        "wipeFilesystem": true
+      }
+    ]
+  }
+}

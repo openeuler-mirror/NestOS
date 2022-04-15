@@ -1,0 +1,30 @@
+{
+  "ignition": {
+    "version": "3.1.0"
+  },
+  "passwd": {
+    "users": [
+      {
+        "groups": [
+          "adm",
+          "sudo",
+          "systemd-journal",
+          "wheel"
+        ],
+        "name": "nest",
+        "passwordHash": "$1$yoursalt$UGhjCXAJKpWWpeN8xsF.c/",
+        "sshAuthorizedKeys": [
+          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyceUsJ5FMOftOW/ZunQCNI9mI1NPjX4D2FknixypmHCG01qZCFPQNUJuHat8xS9Ve1GPImKaMTIW/Xjfpe7EVsbxKY1JYDjEzE/iGyTPcMzUpKJDkhVL1sOpAG4OUXFjpFDx7vHXXoisF8xULxYRnJEimrCqaj4+IIg+s1J5GQ4fcRtL81dSFHkgRvqm/qGsFhRjyfSax6OvoUwDywB1DPGTtNdYjUYv1QIV7R1a6jChBmEpdwJMQRc7HU9sYgJ/uSda4mq6eBCazQRrlaYSQmeyumYFG0LICDJHmavykEO8uL8QiuLtiL0lbjZeiPNtH1QuHBLZnWFIRc+QmmrA1 root@registry.okd.wyl"
+        ]
+      }
+    ]
+  },
+  "storage": {
+    "links": [
+      {
+        "path": "/etc/localtime",
+        "target": "../usr/share/zoneinfo/America/New_York"
+      }
+    ]
+  }
+}
