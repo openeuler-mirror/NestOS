@@ -1,0 +1,47 @@
+{
+  "ignition": {
+    "version": "3.1.0"
+  },
+  "passwd": {
+    "users": [
+      {
+        "groups": [
+          "adm",
+          "sudo",
+          "systemd-journal",
+          "wheel"
+        ],
+        "name": "nest",
+        "passwordHash": "$1$yoursalt$UGhjCXAJKpWWpeN8xsF.c/",
+        "sshAuthorizedKeys": [
+          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDCos5mzCRwZhLE9SOxsCOqYD6GkemFftyd2q85naKAFZtqaGxo3PvuPuIy9NpTBiF7b30cNAiOOu0rmR5gEZJUeob9s6/IHxtMGzt9MB2bgf39hDSmmypX66rJ+ijLxjT67/s/upLUH9UQL0mPDVQN4+bJ9dFkFR+iMxjmv94MsbQ9kg8K4DdWk485byj9dAoNc8IUT8r8Xrt85vb4YGpLAXMka+Vu+Kh83pAiHVI9SxOHYX9Pimcg3JagN4YW8/xMVriFWFNzx6gLLC4bZ6CdPN0lxmiXx9+6YWwtMs6Y3GlSdLAtuMq2KotLoQbQKKbGv0VKdwHe2Dw1jNS6Gwd9YLHLBIV3HNjEsnU6VJk7gNKKwfqpvKX1q4nBrmT3WSksjrE+9iOkEnRSTHP0ExuiXQWRf9l9ZapJeX2c6tk+PV1p+GaTamJC2yn+Sk9XXLjm4iLhD9SRtbVGkM77Lz0Pdbq2qF90BTeNNcDRDlnwZC18aLRWCuWqMp3GkRJkQdU= duyiwei@DESKTOP-AE50ADJ"
+        ]
+      }
+    ]
+  },
+  "storage": {
+    "files": [
+      {
+        "path": "/etc/hostname",
+        "contents": {
+          "source": "data:,nestoshost"
+        },
+        "mode": 420
+      },
+      {
+        "path": "/etc/NetworkManager/system-connections/ens33.nmconnection",
+        "contents": {
+          "source": "data:,%5Bconnection%5D%0Aid%3Dens33%0Atype%3Dethernet%0Ainterface-name%3Dens33%0A%5Bipv4%5D%0Aaddress1%3D192.168.237.188%2F24%2C192.168.237.2%0Adns%3D8.8.8.8%3B%0Adns-search%3D%0Amethod%3Dmanual%0A"
+        },
+        "mode": 384
+      },
+      {
+        "path": "/etc/NetworkManager/system-connections/ens37.nmconnection",
+        "contents": {
+          "source": "data:,%5Bconnection%5D%0Aid%3Dens37%0Atype%3Dethernet%0Ainterface-name%3Dens37%0A%5Bipv4%5D%0Aaddress1%3D192.168.237.189%2F24%2C192.168.237.2%0Adns%3D8.8.8.8%3B%0Adns-search%3D%0Amethod%3Dmanual%0A"
+        },
+        "mode": 384
+      }
+    ]
+  }
+}
