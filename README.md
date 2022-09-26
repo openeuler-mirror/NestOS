@@ -1,6 +1,6 @@
 # NestOS
 
-#### 目前NestOS已跟随openEuler 22.03 LTS版本同步发布，欢迎各位爱好者下载体验！下载请访问[百度云网盘](https://pan.baidu.com/s/1kId_9npFomr_f6gVlcyGXg?pwd=nest)
+#### 目前NestOS-22.03已跟随openEuler 22.03 LTS版本同步发布，NestOS-22.09也将跟随openEuler 22.09 版本同步发布，欢迎各位爱好者下载体验！下载请访问[百度云网盘](https://pan.baidu.com/s/1kId_9npFomr_f6gVlcyGXg?pwd=nest)
 
 #### 介绍
 NestOS是一款在openEuler社区CloudNative sig组孵化的云底座操作系统，专注于提供最佳的容器主机，大规模下安全的运行容器化工作负载。
@@ -59,13 +59,11 @@ NestOS将配置工具ignition与rpm-ostree、OCI支持、SElinux强化等技术�
 |  @duyiwei7w   | 麒麟软件 |   duyiwei@kylinos.cn    |
 |  @ningjinnj   | 麒麟软件 |   ningjin@kylinos.cn    |
 |    @shanph    | 麒麟软件 |  lishanfeng@kylinos.cn  |
-|   @yahoohey   | 麒麟软件 |   chenjian@kylinos.cn   |
 | @wangyueliang | 麒麟软件 | wangyueliang@kylinos.cn |
 | @fu-shanqing  | 麒麟软件 |  fushanqing@kylinos.cn  |
-|   @kylinhao   | 麒麟软件 |   wanghao6@kylinos.cn   |
 | @duguhaotian  |   华为   |   liuhao27@huawei.com   |
 
 欢迎感兴趣的小伙伴加入我们
 
 
-  [1]: ./images/NestOS-roadmap.png "NestOS-roadmap.png"
+[1]: ./images/NestOS-roadmap.png "NestOS-roadmap.png"
