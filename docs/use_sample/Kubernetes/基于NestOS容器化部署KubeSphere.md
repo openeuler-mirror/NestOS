@@ -1,4 +1,4 @@
-# 基于NestOS部署KubeSphere
+# 基于NestOS容器化部署KubeSphere
 
 ##  整体方案
 
@@ -24,344 +24,828 @@ KubeSphere是在 Kubernetes之上构建的**以应用为中心**的**企业级�
   - 部署k8s Node节点，将节点加入k8s集群中
   - 部署KubeSphere
 
-## 开始之前
+## K8S节点配置
 
-需准备如下内容 1.nestos-22.09.qcow2 2.一台主机用作master，一台主机用作node,以下步骤在master节点和node节点均需执行。
+NestOS通过Ignition文件机制实现节点批量配置。本章节简要介绍Ignition文件的生成方法，并提供容器化部署k8s时的Ignition配置示例。NestOS节点系统配置内容如下：
 
-##  配置环境
+| 配置项       | 用途                                   |
+| ------------ | -------------------------------------- |
+| passwd       | 配置节点登录用户和访问鉴权等相关信息   |
+| hostname     | 配置节点的hostname                     |
+| 时区         | 配置节点的默认时区                     |
+| 内核参数     | k8s部署环境需要开启部分内核参数        |
+| 关闭selinux  | k8s部署环境需要关闭selinux             |
+| 设置时间同步 | k8s部署环境通过chronyd服务同步集群时间 |
 
-修改主机名，以master为例
+### 生成登录密码
 
-```
-hostnamectl set-hostname k8s-master
-sudo -i
-```
-
-编辑/etc/hosts
-
-```
-vi /etc/hosts
-```
-
-添加如下内容，ip为主机ip
+使用密码登录方式访问NestOS实例，可使用下述命令生成${PASSWORD_HASH} 供点火文件配置使用：
 
 ```
-192.168.237.133 k8s-master
-192.168.237.135 k8s-node01
+openssl passwd -1 -salt yoursalt
 ```
 
-### 同步系统时间
+### 生成ssh密钥对
+
+采用ssh公钥方式访问NestOS实例，可通过下述命令生成ssh密钥对：
 
 ```
-ntpdate time.windows.com
-systemctl enable ntpd
+ssh-keygen -N '' -f /root/.ssh/id_rsa
 ```
 
-NestOS默认无swap分区，默认关闭防火墙 关闭selinux如下
+查看公钥文件id_rsa.pub，获取ssh公钥信息后供Ignition文件配置使用：
 
 ```
-vi /etc/sysconfig/selinux
-修改为SELINUX=disabled
+cat /root/.ssh/id_rsa.pub
 ```
 
-### 网络配置，开启相应的转发机制
+### 编写butane配置文件
 
-创建配置文件
+本配置文件示例中，下列字段均需根据实际部署情况自行配置。部分字段上文提供了生成方法：
+
+- ${PASSWORD_HASH}：指定节点的登录密码
+- ${SSH-RSA}：配置节点的公钥信息
+- ${MASTER_NAME}：配置主节点的hostname
+- ${MASTER_IP}：配置主节点的IP
+- ${MASTER_SEGMENT}：配置主节点的网段
+- ${NODE_NAME}：配置node节点的hostname
+- ${NODE_IP}：配置node节点的IP
+- ${GATEWAY}：配置节点网关
+- ${service-cidr}：指定service分配的ip段
+- ${pod-network-cidr}：指定pod分配的ip段
+- ${image-repository}：指定镜像仓库地址，例：https://registry.cn-hangzhou.aliyuncs.com
+- ${token}：加入集群的token信息，通过master节点获取
+- ${NET_CARD}：节点IP网卡名称，例ens2
+
+master节点butane配置文件示例：
+
+```yaml
+variant: fcos
+version: 1.1.0
+##passwd相关配置
+passwd:
+  users:
+    - name: root
+      ##登录密码
+      password_hash: "${PASSWORD_HASH}"
+      "groups": [
+          "adm",
+          "sudo",
+          "systemd-journal",
+          "wheel"
+        ]
+      ##ssh公钥信息
+      ssh_authorized_keys:
+        - "${SSH-RSA}"
+storage:
+  directories:
+  - path: /etc/systemd/system/kubelet.service.d
+    overwrite: true
+  files:
+    - path: /etc/hostname
+      mode: 0644
+      contents:
+        inline: ${MASTER_NAME}
+    - path: /etc/hosts
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+          ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+          ${MASTER_IP} ${MASTER_NAME}
+          ${NODE_IP} ${NODE_NAME}
+    - path: /etc/NetworkManager/system-connections/ens2.nmconnection
+      mode: 0600
+      overwrite: true
+      contents:
+        inline: |
+          [connection]
+          id=${NET_CARD}
+          type=ethernet
+          interface-name=${NET_CARD}
+          [ipv4]
+          address1=${MASTER_IP}/24,${GATEWAY}
+          dns=8.8.8.8
+          dns-search=
+          method=manual
+    - path: /etc/sysctl.d/kubernetes.conf
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          net.bridge.bridge-nf-call-iptables=1
+          net.bridge.bridge-nf-call-ip6tables=1
+          net.ipv4.ip_forward=1
+    - path: /etc/isulad/daemon.json
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          {
+              "exec-opts": ["native.cgroupdriver=systemd"],
+              "group": "isula",
+              "default-runtime": "lcr",
+              "graph": "/var/lib/isulad",
+              "state": "/var/run/isulad",
+              "engine": "lcr",
+              "log-level": "ERROR",
+              "pidfile": "/var/run/isulad.pid",
+              "log-opts": {
+                  "log-file-mode": "0600",
+                  "log-path": "/var/lib/isulad",
+                  "max-file": "1",
+                  "max-size": "30KB"
+              },
+              "log-driver": "stdout",
+              "container-log": {
+                  "driver": "json-file"
+              },
+              "hook-spec": "/etc/default/isulad/hooks/default.json",
+              "start-timeout": "2m",
+              "storage-driver": "overlay2",
+              "storage-opts": [
+                  "overlay2.override_kernel_check=true"
+              ],
+              "registry-mirrors": [
+                  "docker.io"
+              ],
+              "insecure-registries": [
+                  "${image-repository}"
+              ],
+              "pod-sandbox-image": "k8s.gcr.io/pause:3.6",
+              "native.umask": "secure",
+              "network-plugin": "cni",
+              "cni-bin-dir": "/opt/cni/bin",
+              "cni-conf-dir": "/etc/cni/net.d",
+              "image-layer-check": false,
+              "use-decrypted-key": true,
+              "insecure-skip-verify-enforce": false,
+              "cri-runtimes": {
+                  "kata": "io.containerd.kata.v2"
+              }
+          }
+    - path: /root/pull_images.sh
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/sh
+          KUBE_VERSION=v1.23.10
+          KUBE_PAUSE_VERSION=3.6
+          ETCD_VERSION=3.5.1-0
+          DNS_VERSION=v1.8.6
+          CALICO_VERSION=v3.19.4
+          username=${image-repository}
+          images=(
+                  kube-proxy:${KUBE_VERSION}
+                  kube-scheduler:${KUBE_VERSION}
+                  kube-controller-manager:${KUBE_VERSION}
+                  kube-apiserver:${KUBE_VERSION}
+                  pause:${KUBE_PAUSE_VERSION}
+                  etcd:${ETCD_VERSION}
+          )
+          for image in ${images[@]}
+          do
+              isula pull ${username}/${image}
+              isula tag ${username}/${image} k8s.gcr.io/${image}
+              isula rmi ${username}/${image}
+          done
+          isula pull ${username}/coredns:${DNS_VERSION}
+          isula tag ${username}/coredns:${DNS_VERSION} k8s.gcr.io/coredns/coredns:${DNS_VERSION}
+          isula rmi ${username}/coredns:${DNS_VERSION}
+          isula pull calico/node:${CALICO_VERSION}
+          isula pull calico/cni:${CALICO_VERSION}
+          isula pull calico/kube-controllers:${CALICO_VERSION}
+          isula pull calico/pod2daemon-flexvol:${CALICO_VERSION}
+          touch /var/log/pull-images.stamp
+    - path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+      mode: 0644
+      contents:
+        inline: |
+          # Note: This dropin only works with kubeadm and kubelet v1.11+
+          [Service]
+          Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf"
+          Environment="KUBELET_CONFIG_ARGS=--config=/var/lib/kubelet/config.yaml"
+          # This is a file that "kubeadm init" and "kubeadm join" generates at runtime, populating the KUBELET_KUBEADM_ARGS variable dynamically
+          EnvironmentFile=-/var/lib/kubelet/kubeadm-flags.env
+          # This is a file that the user can use for overrides of the kubelet args as a last resort. Preferably, the user should use
+          # the .NodeRegistration.KubeletExtraArgs object in the configuration files instead. KUBELET_EXTRA_ARGS should be sourced from this file.
+          EnvironmentFile=-/etc/sysconfig/kubelet
+          ExecStart=
+          ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_KUBEADM_ARGS $KUBELET_EXTRA_ARGS      
+    - path: /root/init-config.yaml
+      mode: 0644
+      contents:
+        inline: |
+          apiVersion: kubeadm.k8s.io/v1beta2
+          kind: InitConfiguration
+          nodeRegistration:
+            criSocket: /var/run/isulad.sock
+            name: k8s-master01
+            kubeletExtraArgs:
+              volume-plugin-dir: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
+          ---
+          apiVersion: kubeadm.k8s.io/v1beta2
+          kind: ClusterConfiguration
+          controllerManager:
+            extraArgs:
+              flex-volume-plugin-dir: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
+          kubernetesVersion: v1.23.10
+          imageRepository: k8s.gcr.io
+          controlPlaneEndpoint: "192.168.122.110:6443"
+          networking:
+            serviceSubnet: "10.96.0.0/16"
+            podSubnet: "10.100.0.0/16"
+            dnsDomain: "cluster.local"
+          dns:
+            type: CoreDNS
+            imageRepository: k8s.gcr.io/coredns
+            imageTag: v1.8.6
+    - path: /root/default-storage.sh
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/sh
+          export KUBECONFIG=/etc/kubernetes/admin.conf
+          kubectl patch storageclass openebs-hostpath -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+    - path: /root/detect-node.sh
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          #/bin/bash
+          while true
+          do
+            export NUM=$(kubectl get nodes --kubeconfig=/etc/kubernetes/admin.conf | wc -l)
+            if [ $NUM -gt 2 ];then
+              /bin/touch /var/log/install-opebs.stamp
+              break
+            fi
+          done
+    - path: /root/install-openebs.sh
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          #/bin/bash
+          curl https://openebs.github.io/charts/openebs-operator.yaml -o /root/openebs-operator.yaml
+          /bin/sleep 6
+          kubectl apply -f /root/openebs-operator.yaml --kubeconfig=/etc/kubernetes/admin.conf
+          /bin/sleep 6
+          kubectl patch storageclass openebs-hostpath -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}' --kubeconfig=/etc/kubernetes/admin.conf
+ 
+    - path: /root/install-kubesphere.sh
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/sh
+          
+          curl https://github.com/kubesphere/ks-installer/releases/download/v3.3.1/kubesphere-installer.yaml -o /root/kubesphere-installer.yaml
+          /bin/sleep 6
+          sed -i '/      serviceAccountName: ks-installer/a\      securityContext:\n        runAsUser: 0\n        runAsGroup: 0\n        fsGroup: 0' /root/kubesphere-installer.yaml
+          kubectl apply -f /root/kubesphere-installer.yaml --kubeconfig=/etc/kubernetes/admin.conf
+
+    - path: /root/install-cluster-configuration.sh
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/sh
+          
+          curl https://github.com/kubesphere/ks-installer/releases/download/v3.3.1/cluster-configuration.yaml -o /root/cluster-configuration.yaml
+          /bin/sleep 6
+          kubectl apply -f /root/cluster-configuration.yaml --kubeconfig=/etc/kubernetes/admin.conf
+
+  links:
+    - path: /etc/localtime
+      target: ../usr/share/zoneinfo/Asia/Shanghai
+
+systemd:
+  units:
+    - name: kubelet.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=kubelet: The Kubernetes Node Agent
+        Documentation=https://kubernetes.io/docs/
+        Wants=network-online.target
+        After=network-online.target
+
+        [Service]
+        ExecStart=/usr/bin/kubelet
+        Restart=always
+        StartLimitInterval=0
+        RestartSec=10
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: set-kernel-para.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=set kernel para for Kubernetes
+        ConditionPathExists=!/var/log/set-kernel-para.stamp
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=modprobe br_netfilter
+        ExecStart=sysctl -p /etc/sysctl.d/kubernetes.conf
+        ExecStart=/bin/touch /var/log/set-kernel-para.stamp
+        
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: pull-images.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=pull images for kubernetes
+        ConditionPathExists=!/var/log/pull-images.stamp
+       
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=systemctl start isulad
+        ExecStart=systemctl enable isulad
+        ExecStart=sh /root/pull_images.sh
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: disable-selinux.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=disable selinux for kubernetes
+        ConditionPathExists=!/var/log/disable-selinux.stamp
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=bash -c "sed -i 's#SELINUX=enforcing#SELINUX=disabled#g' /etc/selinux/config"
+        ExecStart=setenforce 0
+        ExecStart=/bin/touch /var/log/disable-selinux.stamp
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: set-time-sync.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=set time sync for kubernetes
+        ConditionPathExists=!/var/log/set-time-sync.stamp
+        
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=bash -c "sed -i '3aserver ntp1.aliyun.com iburst' /etc/chrony.conf"
+        ExecStart=bash -c "sed -i '24aallow 192.168.122.0/24' /etc/chrony.conf"
+        ExecStart=bash -c "sed -i '26alocal stratum 10' /etc/chrony.conf"
+        ExecStart=systemctl restart chronyd.service
+        ExecStart=/bin/touch /var/log/set-time-sync.stamp
+        
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: init-cluster.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=init kubernetes cluster
+        Requires=set-kernel-para.service pull-images.service disable-selinux.service set-time-sync.service
+        After=set-kernel-para.service pull-images.service disable-selinux.service set-time-sync.service
+        ConditionPathExists=/var/log/set-kernel-para.stamp
+        ConditionPathExists=/var/log/set-time-sync.stamp
+        ConditionPathExists=/var/log/disable-selinux.stamp
+        ConditionPathExists=/var/log/pull-images.stamp
+        ConditionPathExists=!/var/log/init-k8s-cluster.stamp
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=kubeadm init --config=/root/init-config.yaml --upload-certs
+        ExecStart=/bin/touch /var/log/init-k8s-cluster.stamp
+
+        [Install]
+        WantedBy=multi-user.target
+
+
+    - name: install-cni-plugin.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=install cni network plugin for kubernetes
+        Requires=init-cluster.service
+        After=init-cluster.service
+        
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        Restart=on-failure
+        ExecStart=bash -c "curl https://docs.projectcalico.org/v3.19/manifests/calico.yaml -o /root/calico.yaml"
+        ExecStart=/bin/sleep 6
+        ExecStart=bash -c "sed -i 's#usr/libexec/#opt/libexec/#g' /root/calico.yaml"
+        ExecStart=kubectl apply -f /root/calico.yaml --kubeconfig=/etc/kubernetes/admin.conf
+        
+        [Install]
+        WantedBy=multi-user.target
+          
+    - name: detect-node.service
+      enabled: true
+      contents: |
+          [Unit]
+          Description=detect nodes
+          Wants=install-cni-plugin.service
+          After=install-cni-plugin.service
+ 
+          [Service]
+          ExecStart=sh /root/detect-node.sh
+          Restart=always
+          StartLimitInterval=0
+          RestartSec=10
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: install-openebs.service
+      enabled: true
+      contents: |
+          [Unit]
+          Description=install openebs to creat LocalPV
+          Wants=detect-node.service
+          After=detect-node.service
+ 
+          [Service]
+          ExecStart=sh /root/install-openebs.sh
+          Restart=always
+          StartLimitInterval=0
+          RestartSec=10
+
+          [Install]
+          WantedBy=multi-user.target
+    - name: install-kubesphere.service
+      enabled: true
+      contents: |
+          [Unit]
+          Description=install kubesphere
+          Wants=install-openebs.service
+          After=install-openebs.service
+
+          [Service]
+          ExecStart=sh /root/install-kubesphere.sh
+          Restart=always
+          StartLimitInterval=0
+          RestartSec=10
+
+          [Install]
+          WantedBy=multi-user.target
+    - name: cluster-configuration.service
+      enabled: true
+      contents: |
+          [Unit]
+          Description=deploy cluster-configuration
+          Wants=install-kubesphere.service
+          After=install-kubesphere.service
+
+          [Service]
+          ExecStart=sh /root/install-cluster-configuration.sh
+          Restart=always
+          StartLimitInterval=0
+          RestartSec=10
+
+          [Install]
+          WantedBy=multi-user.target
 
 ```
-vi /etc/sysctl.d/k8s.conf
+
+Node节点butane配置文件示例：
+
+```yaml
+variant: fcos
+version: 1.1.0
+passwd:
+  users:
+    - name: root
+      password_hash: "${PASSWORD_HASH}"
+      "groups": [
+          "adm",
+          "sudo",
+          "systemd-journal",
+          "wheel"
+        ]
+      ssh_authorized_keys:
+        - "${SSH-RSA}"
+storage:
+  directories:
+  - path: /etc/systemd/system/kubelet.service.d
+    overwrite: true
+  files:
+    - path: /etc/hostname
+      mode: 0644
+      contents:
+        inline: ${NODE_NAME}
+    - path: /etc/hosts
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+          ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+          ${MASTER_IP} ${MASTER_NAME}	
+          ${NODE_IP} ${NODE_NAME}
+    - path: /etc/NetworkManager/system-connections/ens2.nmconnection
+      mode: 0600
+      overwrite: true
+      contents:
+        inline: |
+          [connection]
+          id=${NET_CARD}
+          type=ethernet
+          interface-name=${NET_CARD}
+          [ipv4]
+          address1=${NODE_IP}/24,${GATEWAY}
+          dns=8.8.8.8;
+          dns-search=
+          method=manual
+    - path: /etc/sysctl.d/kubernetes.conf
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          net.bridge.bridge-nf-call-iptables=1
+          net.bridge.bridge-nf-call-ip6tables=1
+          net.ipv4.ip_forward=1
+    - path: /etc/isulad/daemon.json
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          {
+              "exec-opts": ["native.cgroupdriver=systemd"],
+              "group": "isula",
+              "default-runtime": "lcr",
+              "graph": "/var/lib/isulad",
+              "state": "/var/run/isulad",
+              "engine": "lcr",
+              "log-level": "ERROR",
+              "pidfile": "/var/run/isulad.pid",
+              "log-opts": {
+                  "log-file-mode": "0600",
+                  "log-path": "/var/lib/isulad",
+                  "max-file": "1",
+                  "max-size": "30KB"
+              },
+              "log-driver": "stdout",
+              "container-log": {
+                  "driver": "json-file"
+              },
+              "hook-spec": "/etc/default/isulad/hooks/default.json",
+              "start-timeout": "2m",
+              "storage-driver": "overlay2",
+              "storage-opts": [
+                  "overlay2.override_kernel_check=true"
+              ],
+              "registry-mirrors": [
+                  "docker.io"
+              ],
+              "insecure-registries": [
+                  "${image-repository}"
+              ],
+              "pod-sandbox-image": "k8s.gcr.io/pause:3.6",
+              "native.umask": "secure",
+              "network-plugin": "cni",
+              "cni-bin-dir": "/opt/cni/bin",
+              "cni-conf-dir": "/etc/cni/net.d",
+              "image-layer-check": false,
+              "use-decrypted-key": true,
+              "insecure-skip-verify-enforce": false,
+              "cri-runtimes": {
+                  "kata": "io.containerd.kata.v2"
+              }
+          }
+    - path: /root/pull_images.sh
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/sh
+          KUBE_VERSION=v1.23.10
+          KUBE_PAUSE_VERSION=3.6
+          ETCD_VERSION=3.5.1-0
+          DNS_VERSION=v1.8.6
+          CALICO_VERSION=v3.19.4
+          username=${image-repository}
+          images=(
+                  kube-proxy:${KUBE_VERSION}
+                  kube-scheduler:${KUBE_VERSION}
+                  kube-controller-manager:${KUBE_VERSION}
+                  kube-apiserver:${KUBE_VERSION}
+                  pause:${KUBE_PAUSE_VERSION}
+                  etcd:${ETCD_VERSION}
+          )
+          for image in ${images[@]}
+          do
+              isula pull ${username}/${image}
+              isula tag ${username}/${image} k8s.gcr.io/${image}
+              isula rmi ${username}/${image}
+          done
+          isula pull ${username}/coredns:${DNS_VERSION}
+          isula tag ${username}/coredns:${DNS_VERSION} k8s.gcr.io/coredns/coredns:${DNS_VERSION}
+          isula rmi ${username}/coredns:${DNS_VERSION}
+          touch /var/log/pull-images.stamp
+    - path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+      mode: 0644
+      contents:
+        inline: |
+          # Note: This dropin only works with kubeadm and kubelet v1.11+
+          [Service]
+          Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf"
+          Environment="KUBELET_CONFIG_ARGS=--config=/var/lib/kubelet/config.yaml"
+          # This is a file that "kubeadm init" and "kubeadm join" generates at runtime, populating the KUBELET_KUBEADM_ARGS variable dynamically
+          EnvironmentFile=-/var/lib/kubelet/kubeadm-flags.env
+          # This is a file that the user can use for overrides of the kubelet args as a last resort. Preferably, the user should use
+          # the .NodeRegistration.KubeletExtraArgs object in the configuration files instead. KUBELET_EXTRA_ARGS should be sourced from this file.
+          EnvironmentFile=-/etc/sysconfig/kubelet
+          ExecStart=
+          ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_KUBEADM_ARGS $KUBELET_EXTRA_ARGS
+    - path: /root/join-config.yaml
+      mode: 0644
+      contents:
+        inline: |
+          apiVersion: kubeadm.k8s.io/v1beta3
+          caCertPath: /etc/kubernetes/pki/ca.crt
+          discovery:
+            bootstrapToken:
+              apiServerEndpoint: ${MASTER_IP}:6443
+              token: ${token}
+              unsafeSkipCAVerification: true
+            timeout: 5m0s
+            tlsBootstrapToken: ${token}
+          kind: JoinConfiguration
+          nodeRegistration:
+            criSocket: /var/run/isulad.sock
+            imagePullPolicy: IfNotPresent
+            name: ${NODE_NAME}
+            taints: null
+  links:
+    - path: /etc/localtime
+      target: ../usr/share/zoneinfo/Asia/Shanghai
+
+systemd:
+  units:
+    - name: kubelet.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=kubelet: The Kubernetes Node Agent
+        Documentation=https://kubernetes.io/docs/
+        Wants=network-online.target
+        After=network-online.target
+
+        [Service]
+        ExecStart=/usr/bin/kubelet
+        Restart=always
+        StartLimitInterval=0
+        RestartSec=10
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: set-kernel-para.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=set kernel para for kubernetes
+        ConditionPathExists=!/var/log/set-kernel-para.stamp
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=modprobe br_netfilter
+        ExecStart=sysctl -p /etc/sysctl.d/kubernetes.conf
+        ExecStart=/bin/touch /var/log/set-kernel-para.stamp
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: pull-images.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=pull images for kubernetes
+        ConditionPathExists=!/var/log/pull-images.stamp
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=systemctl start isulad
+        ExecStart=systemctl enable isulad
+        ExecStart=sh /root/pull_images.sh
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: disable-selinux.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=disable selinux for kubernetes
+        ConditionPathExists=!/var/log/disable-selinux.stamp
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=bash -c "sed -i 's#SELINUX=enforcing#SELINUX=disabled#g' /etc/selinux/config"
+        ExecStart=setenforce 0
+        ExecStart=/bin/touch /var/log/disable-selinux.stamp
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: set-time-sync.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=set time sync for kubernetes
+        ConditionPathExists=!/var/log/set-time-sync.stamp
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=bash -c "sed -i '3aserver ${MASTER_IP}' /etc/chrony.conf"
+        ExecStart=systemctl restart chronyd.service
+        ExecStart=/bin/touch /var/log/set-time-sync.stamp
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: join-cluster.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=node join kubernetes cluster
+        Requires=set-kernel-para.service pull-images.service disable-selinux.service set-time-sync.service
+        After=set-kernel-para.service pull-images.service disable-selinux.service set-time-sync.service
+        ConditionPathExists=/var/log/set-kernel-para.stamp
+        ConditionPathExists=/var/log/set-time-sync.stamp
+        ConditionPathExists=/var/log/disable-selinux.stamp
+        ConditionPathExists=/var/log/pull-images.stamp
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=kubeadm join --config=/root/join-config.yaml
+
+        [Install]
+        WantedBy=multi-user.target
+
 ```
 
-添加如下内容
+### 生成Ignition文件
+
+为了方便使用者读、写，Ignition文件增加了一步转换过程。将Butane配置文件（yaml格式）转换成Ignition文件（json格式），并使用生成的Ignition文件引导新的NestOS镜像。Butane配置转换成Ignition配置命令：
 
 ```
-net.bridge.bridge-nf-call-iptables=1
-net.bridge.bridge-nf-call-ip6tables=1
-net.ipv4.ip_forward=1
+podman run --interactive --rm quay.io/coreos/butane:release --pretty --strict < your_config.bu > transpiled_config.ign
 ```
 
-使配置生效
+
+
+## KubeSphere 搭建
+
+利用上一节配置的Ignition文件，执行下述命令创建k8s集群的Master节点，其中 vcpus、ram 和 disk 参数可自行调整，详情可参考 virt-install 手册。
 
 ```
-modprobe br_netfilter
-sysctl -p /etc/sysctl.d/k8s.conf
+virt-install --name=${NAME} --vcpus=4 --ram=8192 --import --network=bridge=virbr0 --graphics=none --qemu-commandline="-fw_cfg name=opt/com.coreos/config,file=${IGNITION_FILE_PATH}" --disk=size=40,backing_store=${NESTOS_RELEASE_QCOW2_PATH} --network=bridge=virbr1 --disk=size=40
 ```
 
-## 配置iSula
+Master节点系统安装成功后，系统后台会起一系列环境配置服务，其中set-kernel-para.service会配置内核参数，pull-images.service会拉取集群所需的镜像，disable-selinux.service会关闭selinux，set-time-sync.service服务会设置时间同步，init-cluster.service会初始化集群，之后install-cni-plugin.service会安装cni网络插件。整个集群部署过程中由于要拉取镜像，所以需要等待几分钟。
 
-修改daemon配置文件
+通过kubectl get pods -A命令可以查看是否所有pod状态都为running：
 
-```
-vi /etc/isulad/daemon.json
-##关于添加项的解释说明##
-registry-mirrors 设置为"docker.io"
-insecure-registries 设置为"rnd-dockerhub.huawei.com"
-pod-sandbox-image 设置为"registry.aliyuncs.com/google_containers/pause:3.5"(使用阿
-里云,pause版本可在上一步查看)
-network-plugin 设置为"cni"。
-cni-bin-dir 设置为"/opt/cni/bin";
-cni-conf-dir 设置为"/etc/cni/net.d"
-```
+![](/docs/graph/K8S容器化部署/k1.PNG)
 
-修改后的完整文件如下
+在Master节点上通过下面命令查看token：
 
 ```
-{"group": "isula",
-"default-runtime": "lcr",
-"graph": "/var/lib/isulad",
-"state": "/var/run/isulad",
-"engine": "lcr",
-"log-level": "ERROR",
-"pidfile": "/var/run/isulad.pid",
-"log-opts": {
-"log-file-mode": "0600",
-"log-path": "/var/lib/isulad",
-"max-file": "1",
-"max-size": "30KB"
-},
-"log-driver": "stdout",
-"container-log": {
-"driver": "json-file"
-},
-"hook-spec": "/etc/default/isulad/hooks/default.json",
-"start-timeout": "2m",
-"storage-driver": "overlay2",
-"storage-opts": [
-"overlay2.override_kernel_check=true"
-],
-"registry-mirrors": [
-"docker.io"
-],
-"insecure-registries": [
-"rnd-dockerhub.huawei.com"
-],
-"pod-sandbox-image": "registry.aliyuncs.com/google_containers/pause:3.5",
-"native.umask": "secure",
-"network-plugin": "cni",
-"cni-bin-dir": "/opt/cni/bin",
-"cni-conf-dir": "/etc/cni/net.d",
-"image-layer-check": false,
-"use-decrypted-key": true,
-"insecure-skip-verify-enforce": false
-}
+kubeadm token list
 ```
 
-启动相关服务
+同时将查询到的token信息添加到Node节点的ignition文件中，并利用该ignition文件创建Node节点。Node节点创建完成后，在Master节点上通过执行kubectl get nodes命令，可以查看Node节点是否加入到了集群中。
 
-```
-systemctl restart isulad
-systemctl enable isulad
-```
+![](/docs/graph/K8S容器化部署/k2.PNG)
 
-## 添加kubelet系统服务
-
-vim /etc/systemd/system/kubelet.service
-
-```
-[Unit]
-Description=kubelet: The Kubernetes Node Agent
-Documentation=https://kubernetes.io/docs/home/
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-ExecStart=/usr/local/bin/kubelet#修改为kubelet二进制文件所在的路径
-Restart=always
-StartLimitInterval=0
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-sudo mkdir -p /etc/systemd/system/kubelet.service.d
-
-vim /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-
-```
-# Note: This dropin only works with kubeadm and kubelet v1.11+
-[Service]
-Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/boott
-strap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf"
-Environment="KUBELET_CONFIG_ARGS=--config=/var/lib/kubelet/config.yaml"
-# This is a file that "kubeadm init" and "kubeadm join" generates at runtime, poo
-pulating the KUBELET_KUBEADM_ARGS variable dynamically
-EnvironmentFile=-/var/lib/kubelet/kubeadm-flags.env
-# This is a file that the user can use for overrides of the kubelet args as a laa
-st resort. Preferably, the user should use
-# the .NodeRegistration.KubeletExtraArgs object in the configuration files instee
-ad. KUBELET_EXTRA_ARGS should be sourced from this file.
-EnvironmentFile=-/etc/default/kubelet
-ExecStart=
-#修改为kubelet二进制文件所在的路径
-ExecStart=/usr/local/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $$
-KUBELET_KUBEADM_ARGS $KUBELET_EXTRA_ARGS
-
-```
-
-systemctl enable --now kubelet
-
-**以上为master，node节点均需执行的操作。**
-
-## 初始化master节点
-
-配置master初始化yaml文件
-
-vi kubeadm-config.yaml
-
-```
-apiVersion: kubeadm.k8s.io/v1beta2
-kind: InitConfiguration
-nodeRegistration:
-  criSocket: "unix:///var/run/isulad.sock"
-  name: k8s-master
-  kubeletExtraArgs:
-    volume-plugin-dir: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
----
-apiVersion: kubeadm.k8s.io/v1beta2
-kind: ClusterConfiguration
-controllerManager:
-  extraArgs:
-    flex-volume-plugin-dir: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
-kubernetesVersion: v1.20.2
-imageRepository: registry.aliyuncs.com/google_containers
-controlPlaneEndpoint: "192.168.122.100:6443"#master的主机ip
-networking:
-  serviceSubnet: "10.96.0.0/16"
-  podSubnet: "10.100.0.0/16"
-  dnsDomain: "cluster.local"
-dns:
-  type: CoreDNS
-  imageRepository: registry.aliyuncs.com/google_containers
-  imageTag: v1.8.4
----
-apiVersion: kubelet.config.k8s.io/v1beta1
-kind: KubeletConfiguration
-cgroupDriver: systemd
-```
-
-抓取镜像
-
-kubeadm config images pull --config=kubeadm-config.yaml
-
-初始化 Master 节点
-
-kubeadm init --config=kubeadm-config.yaml --upload-certs
-
-配置 kubectl
-
-rm -rf /root/.kube/
-
-mkdir /root/.kube/
-
-cp -i /etc/kubernetes/admin.conf /root/.kube/config
-
-chown $(id -u):$(id -g) /root/.kube/config
-
-安装网络插件
-
-```
-wget https://docs.projectcalico.org/v3.19/manifests/calico.yaml
-sed -i 's#usr/libexec/#opt/libexec/#g' /root/calico.yaml
-sed -i 's/# - name: CALICO_IPV4POOL_CIDR/- name: CALICO_IPV4POOL_CIDR/g' /root/calico.yaml
-sed -i 's?#   value: "192.168.0.0/16"?  value: "10.100.0.0/16"?g' /root/calico.yaml
-kubectl apply -f calico.yaml
-```
-
-coredns bug修复
-
-coredns pod虽然是running 的状态，但是他是not ready，system:serviceaccount:kube-system:coredns 缺少权限
-
-修复coredns角色权限
-
-kubectl edit clusterrole system:coredns
-
-在后面追加内容
-
-```
-- apiGroups:
-  - discovery.k8s.io
-  resources:
-  - endpointslices
-  verbs:
-  - list
-  - watch
-```
-
-修改好后过一会再执行命令查看coredns pod
-
-kubectl get pods -n kube-system 
-
-## 初始化node节点
-
-只在 master 节点执行
-
-kubeadm token create --print-join-command
-
-可获取kubeadm join 命令及参数，
-
-```
-kubeadm join 192.168.122.100:6443 --token en5jwd.pmkqlojjq1m22gmr   --discovery-token-ca-cert-hash sha256:3e55db5743e5858b8330e11cd4784e3039ef9ab66bc6ea327823b2021f70f045 
-```
-
-在命令结尾添加
-
-```
---cri-socket=/var/run/isulad.sock
-```
-
-在node节点执行如下命令
-
-```
-kubeadm join 192.168.122.100:6443 --token en5jwd.pmkqlojjq1m22gmr   --discovery-token-ca-cert-hash sha256:3e55db5743e5858b8330e11cd4784e3039ef9ab66bc6ea327823b2021f70f045 --cri-socket=/var/run/isulad.sock
-```
-
-## 部署kubesphere
-
-前提条件
-
-集群已有默认的存储类型（StorageClass），若集群还没有准备存储请参考 安装 OpenEBS 创建 LocalPV 存储类型 用作开发测试环境，生产环境请确保集群配置了稳定的持久化存储。
-
-安装 OpenEBS
-
-```
-kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml
-```
-
-如下将 `openebs-hostpath`设置为 **默认的 StorageClass**：
-
-```text
-$ kubectl patch storageclass openebs-hostpath -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-storageclass.storage.k8s.io/openebs-hostpath patched
-```
-
-至此，OpenEBS 的 LocalPV 已作为默认的存储类型创建成功。可以通过命令 kubectl get pod -n openebs来查看 OpenEBS 相关 Pod 的状态，若 Pod 的状态都是 running，则说明存储安装成功。
-
-![](/docs/graph/kubesphere容器化部署/storage.png)
-
-部署 KubeSphere
-
-```
-wget https://github.com/kubesphere/ks-installer/releases/download/v3.3.1/kubesphere-installer.yaml
-```
-
-修改kubesphere-installer.yaml，添加设置，使pod内的用户为root
-
-![](/docs/graph/kubesphere容器化部署/root.png)
-
-```
-kubectl apply -f kubesphere-installer.yaml   
-kubectl apply -f https://github.com/kubesphere/ks-installer/releases/download/v3.3.1/cluster-configuration.yaml
-```
-
-检查安装日志：
-
+至此，k8s部署成功。在搭建完成后，Master节点中install-openebs.service 将安装 OpenEBS 创建 LocalPV 存储类型，并将其设为默认的存储类型。install-kubesphere.service 和 cluster-configuration.service 将完成部署KubeSphere。可通过下命令检查安装日志： 
 ```
 kubectl logs -n kubesphere-system $(kubectl get pod -n kubesphere-system -l 'app in (ks-install, ks-installer)' -o jsonpath='{.items[0].metadata.name}') -f
 ```
 
-使用 `kubectl get pod --all-namespaces` 查看所有 Pod 在 KubeSphere 相关的命名空间是否正常运行。如果是正常运行，请通过以下命令来检查控制台的端口（默认为 30880）：
-
+使用 kubectl get pod --all-namespaces 查看所有 Pod 在 KubeSphere 相关的命名空间是否正常运行。如果是正常运行，请通过以下命令来检查控制台的端口（默认为 30880）：
 ```
 kubectl get svc/ks-console -n kubesphere-system
 ```
