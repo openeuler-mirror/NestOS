@@ -1,0 +1,130 @@
+variant: fcos
+version: 1.1.0
+## passwd
+passwd:
+  users:
+    - name: nest
+      ## login password
+      password_hash: "${PASSWORD_HASH}"
+      "groups": [
+          "adm",
+          "sudo",
+          "systemd-journal",
+          "wheel"
+        ]
+      ## SSH public key
+      ssh_authorized_keys:
+        - "${SSH-RSA}"
+storage:
+  files:
+    ## Hostname
+    - path: /etc/hostname
+      mode: 0644
+      contents:
+        inline: ${HOSTNAME}
+    ## Kernel parameter - part1
+    - path: /etc/sysctl.conf
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          net.ipv4.ip_forward = 1
+          net.bridge.bridge-nf-call-iptables=1
+          net.bridge.bridge-nf-call-ip6tables=1
+          net.ipv4.ip_nonlocal_bind = 1
+          net.ipv6.ip_nonlocal_bind=1
+          net.unix.max_dgram_qlen=128
+      ## NIC 1，use the ens2 as an example. If there are many nodes, you can choose DHCP.
+    - path: /etc/NetworkManager/system-connections/${ens2}.nmconnection
+      mode: 0600
+      overwrite: true
+      contents:
+        inline: |
+          [connection]
+          id=${ens2}
+          type=ethernet
+          interface-name=${ens2}
+          [ipv4]
+          address1=${YOUR_IP}/24,${YOUR_GATEWAY}
+          dns=${YOUR_DNS};
+          dns-search=
+          method=manual
+    ## NIC 2，use the ens3 as an example.
+    - path: /etc/NetworkManager/system-connections/${ens3}.nmconnection
+      mode: 0600
+      contents:
+        inline: |
+          [connection]
+          id=${ens3}
+          type=ethernet
+          interface-name=${ens3}
+          ## The second network interface should be active without IP address. 
+          [ipv4]
+          dns-search=
+          method=disabled
+  links:
+    ## Time zone
+    - path: /etc/localtime
+      ## Use the Shanghai time zone as an example: target: ../usr/share/zoneinfo/Asia/Shanghai
+      target: ${YOUR_ZONEINFO_PATH}
+systemd:
+  units:
+    ## Python
+    - name: install-python3-for-openstack.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=install python3 for openstack
+        Wants=network-online.target
+        After=network-online.target
+        Before=zincati.service
+        ConditionPathExists=!/var/lib/install-python3-for-openstack.stamp
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/bin/rpm-ostree install --apply-live python3-devel python3-docker python3-libselinux
+        ExecStart=/bin/touch /var/lib/install-python3-for-openstack.stamp
+        [Install]
+        WantedBy=multi-user.target
+    ## Disable selinux
+    - name: disable-selinux-for-openstack.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=disable selinux for openstack
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=bash -c "sed -i 's#SELINUX=enforcing#SELINUX=disabled#g' /etc/selinux/config"
+        ExecStart=setenforce 0
+        [Install]
+        WantedBy=multi-user.target
+    ## Kernel Parameter - part2
+    - name: set-kernel-para-for-openstack.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description= for openstack
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=modprobe br_netfilter
+        ExecStart=sysctl -p
+        [Install]
+        WantedBy=multi-user.target
+    ## Time Sync
+    - name: set-time-synch-for-openstack.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=set time synchronization for openstack
+        Wants=chronyd.service
+        After=chronyd.service
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=bash -c "sed -i '1a server ${localhost_ip} iburst' /etc/chrony.conf"
+        ExecStart=systemctl restart chronyd.service
+        ExecStart=systemctl enable chronyd.service
+        [Install]
+        WantedBy=multi-user.target
