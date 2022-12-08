@@ -252,11 +252,11 @@ kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods --all-namespaces
 
 查看是否所有pod状态都为running：
 
-![](/docs/graph/rancher/rke2-1.PNG)
+![](/docs/zh/graph/rancher/rke2-1.PNG)
 
 查看Node节点是否加入到了集群中：
 
-![](/docs/graph/rancher/rke2-2.PNG)
+![](/docs/zh/graph/rancher/rke2-2.PNG)
 
 RKE2默认使用containerd作为Runtime，如果需要查询主机上运行的容器，可以使用以下命令：
 

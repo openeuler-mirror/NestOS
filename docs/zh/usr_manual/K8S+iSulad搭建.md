@@ -34,7 +34,7 @@ gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors
 rpm-ostree install kubelet kubeadm kubectl ntp ntpdate wget
 ```
 
-![image-20211014203239831](/docs/graph/K8S+iSulad搭建/image-20211014203239831.png)
+![image-20211014203239831](/docs/zh/graph/K8S+iSulad搭建/image-20211014203239831.png)
 
 重启生效
 
@@ -44,7 +44,7 @@ systemctl reboot
 
 选择正确的分支
 
-![image-20211014203252726](/docs/graph/K8S+iSulad搭建/image-20211014203252726.png)
+![image-20211014203252726](/docs/zh/graph/K8S+iSulad搭建/image-20211014203252726.png)
 
 查看软件包是否已安装
 
@@ -52,7 +52,7 @@ systemctl reboot
 rpm -qa | grep kube
 ```
 
-![image-20211014203302042](/docs/graph/K8S+iSulad搭建/image-20211014203302042.png)
+![image-20211014203302042](/docs/zh/graph/K8S+iSulad搭建/image-20211014203302042.png)
 
 ## 配置环境
 
@@ -126,7 +126,7 @@ sysctl -p /etc/sysctl.d/k8s.conf
 kubeadm config images list
 ```
 
-![image-20211014203312883](/docs/graph/K8S+iSulad搭建/image-20211014203312883.png)
+![image-20211014203312883](/docs/zh/graph/K8S+iSulad搭建/image-20211014203312883.png)
 
 修改daemon配置文件
 
@@ -222,7 +222,7 @@ pod-network-cidr 指定pod分配的ip段
 
 初始化成功后可看到如下界面:
 
-![image-20211014203323220](/docs/graph/K8S+iSulad搭建/image-20211014203323220.png)
+![image-20211014203323220](/docs/zh/graph/K8S+iSulad搭建/image-20211014203323220.png)
 
 复制最后两行内容方便后续node节点加入使用
 
@@ -240,7 +240,7 @@ socket=/var/run/isulad.sock
 isula images
 ```
 
-![image-20211014203329239](/docs/graph/K8S+iSulad搭建/image-20211014203329239.png)
+![image-20211014203329239](/docs/zh/graph/K8S+iSulad搭建/image-20211014203329239.png)
 
 按照初始化成功所提示，配置集群
 
@@ -258,7 +258,7 @@ source /etc/profile
 kubectl get cs
 ```
 
-![image-20211014203335591](/docs/graph/K8S+iSulad搭建/image-20211014203335591.png)
+![image-20211014203335591](/docs/zh/graph/K8S+iSulad搭建/image-20211014203335591.png)
 
 可以看到controller-manager,scheduler状态为unhealthy，解决方法如下:
 编辑相关配置文件
@@ -285,7 +285,7 @@ vi /etc/kubernetes/manifests/kube-scheduler.yaml
 
 等待片刻后，再次查看健康状态
 
-![image-20211014203341778](/docs/graph/K8S+iSulad搭建/image-20211014203341778.png)
+![image-20211014203341778](/docs/zh/graph/K8S+iSulad搭建/image-20211014203341778.png)
 
 ## 配置网络插件
 
@@ -315,7 +315,7 @@ kubectl apply -f calico.yaml
 通过kubectl get pod -n kube-system查看calico是否安装成功
 通过kubectl get pod -n kube-system查看是否所有pod状态都为running
 
-![image-20211014203349296](/docs/graph/K8S+iSulad搭建/image-20211014203349296.png)
+![image-20211014203349296](/docs/zh/graph/K8S+iSulad搭建/image-20211014203349296.png)
 
 ## node节点加入集群
 
@@ -330,10 +330,10 @@ socket=/var/run/isulad.sock
 
 通过kubectl get node 查看master，node节点状态是否为ready
 
-![image-20211014203355103](/docs/graph/K8S+iSulad搭建/image-20211014203355103.png)
+![image-20211014203355103](/docs/zh/graph/K8S+iSulad搭建/image-20211014203355103.png)
 
 再次查看pod
 
-![image-20211014203400852](/docs/graph/K8S+iSulad搭建/image-20211014203400852.png)
+![image-20211014203400852](/docs/zh/graph/K8S+iSulad搭建/image-20211014203400852.png)
 
 至此，k8s部署成功。

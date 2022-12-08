@@ -214,7 +214,7 @@ Ignition失败的一个常见原因是格式错误（如拼写错误或不正确
 
 系统第一次进行引导安装，启动流程将以initrd.target为目标（如下图所示）。开始点火，通过离线（或者在线）获取Ignition配置信息，通过ignition-kargs.service和ignition-disks.service对内核及磁盘进行设置。当到达initrd-root-device.target目标时，表示根文件系统设备可用，但是还没有挂载。如果成功的将根文件系统挂载到/sysroot目录，那么sysroot.mount单元将被启动，然后进一步到达initrd-root-fs.target目标。Ignition-files.service开始工作并对Ignition config中的文件（例：对/etc目录的修改）进行设置。然后initrd-parse-etc.service将分析/sysroot/etc/下的文件，并挂载到/sysroot之下，然后流程到达initrd-fs.target目标。点火完成，initrd-cleanup.service将会使用systemctl --no-block isolate命令启动initrd-switch-root.target目标，最后启动initrd-switch-root.service服务，将系统的根目录切换至/sysroot目录。
 
-![image-20220621093651418](/docs/graph/Ignition组件分析/image-20220621093651418.png)
+![image-20220621093651418](/docs/zh/graph/Ignition组件分析/image-20220621093651418.png)
 
 ```
 ###ignition-files.service 示例
@@ -244,11 +244,11 @@ ExecStart=/usr/bin/ignition --root=/sysroot --platform=${PLATFORM_ID} --stage=fi
 
 #### 3.2 Ignition创建unit文件流程
 
-![image-20220621093808477](/docs/graph/Ignition组件分析/image-20220621093808477.png)
+![image-20220621093808477](/docs/zh/graph/Ignition组件分析/image-20220621093808477.png)
 
 #### 3.3 Ignition主要代码框架
 
-![image-20220621094213306](/docs/graph/Ignition组件分析/image-20220621094213306.png)
+![image-20220621094213306](/docs/zh/graph/Ignition组件分析/image-20220621094213306.png)
 
 ### 四、注意事项
 
