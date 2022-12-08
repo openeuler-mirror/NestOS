@@ -23,9 +23,9 @@ nestos镜像的制作需要在特定的构建目录下进行，因此需进行�
  - image.yaml: 包含对磁盘镜像的参数配置，如压缩方式等
  - overlay.d： 可嵌入到系统内，包含配置文件、service、脚本等，`overlay.d/`中的每个子目录都会顺序添加到OSTree提交中，每个子目录是一次commit，且使用数字前缀命名目录
 
-![enter description here](/docs/graph/nestos-assembler/fetch1.png)
+![enter description here](/docs/zh/graph/nestos-assembler/fetch1.png)
 
-![enter description here](/docs/graph/nestos-assembler/fetch2.png)
+![enter description here](/docs/zh/graph/nestos-assembler/fetch2.png)
 
 ### 构建nestos
 
