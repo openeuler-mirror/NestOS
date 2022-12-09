@@ -1,6 +1,8 @@
 # NestOS
 
-#### 目前NestOS-22.03已跟随openEuler 22.03 LTS版本同步发布，NestOS-22.09已经跟随openEuler 22.09 版本同步发布，欢迎各位爱好者下载体验！下载请访问[百度云网盘](https://pan.baidu.com/s/1kId_9npFomr_f6gVlcyGXg?pwd=nest)
+#### 目前NestOS-22.03已跟随openEuler 22.03 LTS版本同步发布，NestOS-22.09已经跟随openEuler 22.09 版本同步发布，欢迎各位爱好者下载体验！
+
+详情请访问[NestOS官方网站](https://nestos.openeuler.org/)。
 
 #### 介绍
 NestOS是一款在openEuler社区CloudNative sig组孵化的云底座操作系统，专注于提供最佳的容器主机，大规模下安全的运行容器化工作负载。
