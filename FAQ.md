@@ -1,6 +1,6 @@
 1、NestOS与Fedora CoreOS是什么关系？
 
-NestOS是基于Fedora CoreOS的衍生版本，后续我们将会结合openeuler社区的各项特性，独立维护发展，也欢迎各位伙伴在issue中提出自己的需求和意见。
+NestOS是基于Fedora CoreOS技术路线研发的OS版本，后续我们将会结合openeuler社区的各项特性，独立维护发展，也欢迎各位伙伴在issue中提出自己的需求和意见。
 
 2、nestos-config仓是什么？
 
