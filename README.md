@@ -1,6 +1,6 @@
 # NestOS
 
-#### 目前NestOS-22.03 SP1已跟随openEuler 22.03 LTS SP1版本同步发布，欢迎各位爱好者下载体验！
+#### 目前NestOS-23.03已跟随openEuler 23.03版本同步发布，欢迎各位爱好者下载体验！
 
 详情请访问[NestOS官方网站](https://nestos.openeuler.org/)。
 
