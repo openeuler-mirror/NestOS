@@ -117,7 +117,7 @@ NestOS 22.03 LTS SP2 版本共发现问题 1 个，有效问题 1 个，0个遗�
 |     NestOS Test Round 1     |      25      |       2 FAIL       |       0       |
 |     NestOS Test Round 2     |      35      |       1 FAIL       |       1       |
 |     NestOS Test Round 3     |      1       |       ALL PASS     |       0       |
-|     NestOS Test Round 3     |      61      |       waiting     |       0       |
+|     NestOS Test Round 3     |      61      |       ALL PASS     |       0       |
 
 *数据项说明：*
 
