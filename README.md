@@ -1,6 +1,6 @@
 # NestOS
 
-#### 目前NestOS-23.03已跟随openEuler 23.03版本同步发布，欢迎各位爱好者下载体验！
+#### 目前NestOS-22.03-LTS-SP2已跟随NestOS-22.03-LTS-SP2版本同步发布，欢迎各位爱好者下载体验！
 
 详情请访问[NestOS官方网站](https://nestos.openeuler.org/)。
 
@@ -60,6 +60,7 @@ NestOS将配置工具ignition与rpm-ostree、OCI支持、SElinux强化等技术�
 |   Gitee ID    |   公司   |          邮箱           |
 | :-----------: | :------: | :---------------------: |
 |  @duyiwei7w   | 麒麟软件 |   duyiwei@kylinos.cn    |
+|  @ccdxx       | 麒麟软件 |   chendexi@kylinos.cn    |
 |  @ningjinnj   | 麒麟软件 |   ningjin@kylinos.cn    |
 |    @shanph    | 麒麟软件 |  lishanfeng@kylinos.cn  |
 | @wangyueliang | 麒麟软件 | wangyueliang@kylinos.cn |
