@@ -1,61 +1,71 @@
-# NestOS
 
-#### 目前NestOS-22.03-LTS-SP2已跟随NestOS-22.03-LTS-SP2版本同步发布，欢迎各位爱好者下载体验！
+#### 在不断演进的云原生世界中，容器化和虚拟化技术已经成为了现代应用程序交付和管理的关键组成部分。为满足这个不断增长的需求，我们基于NestOS-22.03-LTS-SP2版本全新出发，推出了NestOS For Container 和 NestOS For Virt两个版本，专注于提供最佳的容器主机和虚拟化解决方案。欢迎各位开发者访问[NestOS官方网站](https://nestos.openeuler.org/)下载体验。
 
-详情请访问[NestOS官方网站](https://nestos.openeuler.org/)。
 
-#### 介绍
-NestOS是一款在openEuler社区CloudNative sig组孵化的云底座操作系统，专注于提供最佳的容器主机，大规模下安全的运行容器化工作负载。
 
-Nest即“巢穴”，作为可以包容podman（鼹鼠）、iSulad（蚂蚁）、docker（集装箱）的“巢穴”，NestOS即化身为可以搭载iSulad、docker、podman等基础平台的操作系统。
-
-NestOS将配置工具ignition与rpm-ostree、OCI支持、SElinux强化等技术集成在一起，采用基于双根文件系统、容器技术和集群架构的设计思路，搭载iSulad、docker、podman等主流容器基础平台，克服了由于用户修改系统内容、用户服务对系统组件依赖，以及系统软件包升级时不稳定中间态等种种导致升级过程不可靠的因素，最终以一种轻量级、定制化的操作系统呈现出来。可以适应各种不同的基础设施环境，并与OKD紧密集成，针对运行Kubernetes进行了优化，使系统具备十分便捷的集群组建能力。
-
-目前NestOS beta版已经在鲲鹏920、飞腾2000、飞腾2500等平台上完成了适配。 
+## 1. NestOS For Container
+NestOS For Container（以下简称NFC）集成了rpm-ostree支持、ignition配置等技术，采用双根文件系统，原子化更新的设计思路，使用nestos-assembler快速集成构建。并针对K8S、openStack等平台进行适配，优化容器运行底噪，使系统具备十分便捷的集群组建能力，可以更安全的运行大规模的容器化工作负载。
 
 ![image-20211015170943884](docs/zh/graph/README/image-20211015170943884.png)
 
-#### 快速开始
+
+### 1.1 NFC-快速开始
 [在虚拟化平台部署-以VMware为例](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B.md)
 
-#### NestOS应用指南
-1.  [rpm-ostree使用](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/rpm-ostree%E4%BD%BF%E7%94%A8.md)
-2.  [k8s+iSulad搭建](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/K8S+iSulad%E6%90%AD%E5%BB%BA.md)
-3.  [zincati自动更新](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/zincati%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E4%BD%BF%E7%94%A8.md)
-4.  [NestOS定制化](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/%E5%AE%9A%E5%88%B6NestOS.md)
-5.  [ignition配置示例](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/ignition%E9%85%8D%E7%BD%AE.md) 
-6.  [容器镜像更新使用](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E6%9B%B4%E6%96%B0%E4%BD%BF%E7%94%A8.md) 
+### 1.2 NFC-应用指南
+①.  [rpm-ostree使用](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/rpm-ostree%E4%BD%BF%E7%94%A8.md)
+②.  [zincati自动更新](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/zincati%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E4%BD%BF%E7%94%A8.md)
+③.  [NestOS定制化](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/%E5%AE%9A%E5%88%B6NestOS.md)
+④.  [ignition配置示例](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/ignition%E9%85%8D%E7%BD%AE.md) 
+⑤.  [容器镜像更新使用](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/%E5%AE%B9%E5%99%A8%E9%95%9C%E5%83%8F%E6%9B%B4%E6%96%B0%E4%BD%BF%E7%94%A8.md) 
+⑥.  [更多功能特性详细说明](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/%E5%8A%9F%E8%83%BD%E7%89%B9%E6%80%A7%E6%8F%8F%E8%BF%B0.md)
 
-#### 功能特性
+## 2. NestOS For Virt
+NestOS For Virt（以下简称NFV）是一个专为虚拟化场景而设计的版本，预安装了虚拟化关键组件，其目标是用户可以轻松创建和管理虚拟机，无论是在开发、测试还是生产环境中工作，都能够提供卓越的虚拟化性能，同时可以在高性能的虚拟机上运行各种工作负载，实现资源隔离和安全性。
 
-1.  容器技术
-2.  rpm-ostree
-3.  nestos-installer
-4.  Zincati
-5.  Cincinnati
-6.  ignition系统初始化
-7.  Afterburn
+无论是运行云原生应用程序、虚拟化环境，还是两者兼顾，NestOS For Container 和 NestOS For Virt 都是理想之选。它们提供了稳定性、性能和安全性，以满足现代数据中心和云环境的要求。
 
-详细内容请点击[功能特性详细说明](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/%E5%8A%9F%E8%83%BD%E7%89%B9%E6%80%A7%E6%8F%8F%E8%BF%B0.md)
+## 3. 六大特性助力NestOS全新出发
 
-#### 容器性能测试
+### 3.1 云原生一体化运维工具
+NestOS For Container专属容器云部署运维工具NKD（nestos-kubernetes-deployer），是基于NestOS部署kubernetes集群，与容器云业务与云底座OS一致性运维而准备的解决方案。其目标是在集群外提供对集群基础设施（包括操作系统和kubernetes基础组件）的部署、更新和配置管理等服务，从而简化了集群部署和升级的流程。
 
-使用NestOS-22.03.20220323版本，横向对比 docker，podman，iSulad 容器引擎性能。测试结果如下:
+### 3.2 PilotGo插件式运维管理平台
+PilotGo是麒麟软件在openEuler社区孵化的插件式运维管理平台。本次PilotGo针对NestOS平台特性及最佳应用实践，为NestOS平台带来了定制化的运维管理功能及全新的架构感知插件特性。
 
-| operator(ms) | Docker | Podman | iSulad | vs Docker | vs Podman |
-| :----------: | :----: | :----: | :----: | :-------: | :-------: |
-|  100*creat   |  1706  | 20748  |  1130  |   -34%    |   -95%    |
-|  100*start   |  9313  |  11359  |  2636  |   -72%    |   -77%    |
-|   100*stop   |  1316  |  1511  |  518   |   -61%    |   -66%    |
-|    100*rm    |  1351  |  5582  |  920   |   -32%    |   -84%    |
+### 3.3 x2NestOS:不可变模式转换工具
+x2nestos是一款将通用形态操作系统转换为 NestOS For Container 版本的快捷部署工具。NestOS For Virt版本默认集成，也可通用于以yum或apt主流包管理器管理的其他通用linux操作系统。该工具基于kexec动态加载内核特性，实现跳过引导阶段完成操作系统部署，有效降低现有集群转换为NestOS For Container难度和成本。
 
-更多详细内容请[点击](https://gitee.com/openeuler/NestOS/blob/master/docs/zh/usr_manual/%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94%E6%B5%8B%E8%AF%95.md)
+### 3.4 轻松定制系统镜像
+NestOS for Containers，作为基于不可变基础设施思想的容器云底座操作系统，将文件系统作为一个整体进行分发和更新。这一方案在运维与安全方面带来了巨大的提升。然而，在实际生产环境中，官方发布的版本往往难以满足用户的需求，因此需要更方便的定制手段。现NestOS For Container集成ostree native container特性，可使容器云场景用户利用熟悉的技术栈，只需编写一个ContainerFile(Dockerfile)文件，即可轻松构建定制版镜像，用于自定义集成组件或后续的升级维护工作。
+
+### 3.5 Rubik在离线混部
+Rubik是一个自适应单机算力调优和服务质量保障的容器混部引擎，NestOS  For Container版本已预开启Rubik在离线混部相关内核特性，支持基于rubik容器混部引擎的整体解决方案，通过对资源进行合理调度与隔离，在保障关键业务服务质量的前提下极大提升容器云场景资源利用率。
+
+### 3.6 内核特性增强
+我们对nestos-kernel进行了独立维护，并基于openEuler-22.03-sp2内核版本进行开发。在这个过程中，我们专注于改进mm、cpu、cgroup等方面的内核特性，以创造出与Euler内核有所差异并具有更好优化性能的特点。
 
 
-#### NestOS roadmap
+#### 更多详细内容访问[NestOS官方网站](https://nestos.openeuler.org/)
 
-![image-NestOS-roadmap.png](docs/zh/graph/README/image-NestOS-roadmap.png)
-#### 主要贡献者
+## 4. 容器性能测试
+
+使用NestOS For Container-22.03-LTS-SP2.20230928版本，横向对比 docker，podman，iSulad 容器引擎性能。测试结果如下:
+通过数据可以看出在NestOS For Container运行容器的性能远优于传统的CentOS
+
+       
+| operator(ms) | NestOS(Podman) | CentOS(Podman) | NestOS(iSulad) | CentOS(iSulad) | NestOS(Docker) | CentOS(Docker) |
+| :----------: | :----: | :----: | :----: | :-------: | :-------: | :-------: |
+|  100*creat   |  3436  | 6761  |  858  |   882    |   1375    |   2919    |
+|  100*start   |  5496  |  10130  |  1885  |   2123    |   7397    |   18400    |
+|   100*stop   |  2516  |  2532  |  457   |   497   |   1052    |   465    |
+|    100*rm    |  2971  |  3141  |  501   |   566    |   1116    |   6838    |
+
+
+
+
+
+## 5. 主要贡献者
 
 |   Gitee ID    |   公司   |          邮箱           |
 | :-----------: | :------: | :---------------------: |
