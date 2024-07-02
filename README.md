@@ -1,5 +1,5 @@
 
-#### 在不断演进的云原生世界中，容器化和虚拟化技术已经成为了现代应用程序交付和管理的关键组成部分。为满足这个不断增长的需求，我们基于NestOS-22.03-LTS-SP2版本全新出发，推出了NestOS For Container 和 NestOS For Virt两个版本，专注于提供最佳的容器主机和虚拟化解决方案。现已发布NestOS-22.03-LTS-SP3-20231231版本，欢迎各位开发者访问[NestOS官方网站](https://nestos.openeuler.org/)下载体验。
+#### 在不断演进的云原生世界中，容器化和虚拟化技术已经成为了现代应用程序交付和管理的关键组成部分。为满足这个不断增长的需求，我们基于NestOS-22.03-LTS-SP2版本全新出发，推出了NestOS For Container 和 NestOS For Virt两个版本，专注于提供最佳的容器主机和虚拟化解决方案。现已发布NestOS-22.03-LTS-SP4-20240628版本，欢迎各位开发者访问[NestOS官方网站](https://nestos.openeuler.org/)下载体验。
 
 
 
@@ -62,21 +62,27 @@ Rubik是一个自适应单机算力调优和服务质量保障的容器混部引
 |    100*rm    |  2971  |  3141  |  501   |   566    |   1116    |   6838    |
 
 
-
-
-
 ## 5. 主要贡献者
 
 |   Gitee ID    |   公司   |          邮箱           |
 | :-----------: | :------: | :---------------------: |
 |  @duyiwei7w   | 麒麟软件 |   duyiwei@kylinos.cn    |
 |  @ccdxx       | 麒麟软件 |   chendexi@kylinos.cn    |
-|  @ningjinnj   | 麒麟软件 |   ningjin@kylinos.cn    |
 |    @shanph    | 麒麟软件 |  lishanfeng@kylinos.cn  |
 | @wangyueliang | 麒麟软件 | wangyueliang@kylinos.cn |
-| @fu-shanqing  | 麒麟软件 |  fushanqing@kylinos.cn  |
 | @jianli-97    | 麒麟软件 |  lijian2@kylinos.cn     |
 | @duguhaotian  |   华为   |   liuhao27@huawei.com   |
+
+## 6. Honor Contributor
+
+感谢以下原贡献者对NestOS项目及openEuler社区的贡献：
+
+|   Gitee ID    |   公司   |          邮箱           |
+| :-----------: | :------: | :---------------------: |
+| @fu-shanqing  | 麒麟软件 |  fushanqing@kylinos.cn  |
+|  @ningjinnj   | 麒麟软件 |   ningjin@kylinos.cn    |
+
+
 
 欢迎感兴趣的小伙伴加入我们
 
