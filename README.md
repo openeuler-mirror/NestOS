@@ -1,7 +1,7 @@
 
-#### 在不断演进的云原生世界中，容器化和虚拟化技术已经成为了现代应用程序交付和管理的关键组成部分。为满足这个不断增长的需求，我们基于NestOS-22.03-LTS-SP2版本全新出发，推出了NestOS For Container 和 NestOS For Virt两个版本，专注于提供最佳的容器主机和虚拟化解决方案。现已发布NestOS-22.03-LTS-SP4-20240628版本，欢迎各位开发者访问[NestOS官方网站](https://nestos.openeuler.org/)下载体验。
+#### 在不断演进的云原生世界中，容器化和虚拟化技术已经成为了现代应用程序交付和管理的关键组成部分。为满足这个不断增长的需求，NestOS推出了NestOS For Container 和 NestOS For Virt两个版本，专注于提供最佳的容器主机和虚拟化解决方案。现已发布NestOS-24.03-LTS版本，欢迎各位开发者访问[NestOS官方网站](https://nestos.openeuler.org/)下载体验。
 
-
+#### 从24.03-LTS版本开始，我们对发布目录进行了规划改造，以适应更复杂的发布需求。
 
 ## 1. NestOS For Container
 NestOS For Container（以下简称NFC）集成了rpm-ostree支持、ignition配置等技术，采用双根文件系统，原子化更新的设计思路，使用nestos-assembler快速集成构建。并针对K8S、openStack等平台进行适配，优化容器运行底噪，使系统具备十分便捷的集群组建能力，可以更安全的运行大规模的容器化工作负载。
